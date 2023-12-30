@@ -1,0 +1,17 @@
+{
+  "packageName": "Hubitat Advanced Presence Sensor",
+  "author": "John Goughenour",
+  "version": "2.0.0",
+  "minimumHEVersion": "2.1.9",
+  "dateReleased": "2023-12-30",
+  "licenseFile": "https://raw.githubusercontent.com/TOSH-SmartHome/Hubitat-Advanced-Presence-Sensor/main/LICENSE",
+  "drivers": [
+    {
+      "id": "c75750d8-bb49-4457-9f67-3ab0d08519f3",
+      "name": "Advanced Presence Sensor",
+      "namespace": "tosh",
+      "location": "https://raw.githubusercontent.com/TOSH-SmartHome/Hubitat-Advanced-Presence-Sensor/main/advance_presence_sensor.groovy",
+      "required": false
+    }
+  ]
+}

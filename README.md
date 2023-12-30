@@ -11,5 +11,4 @@ The Advanced Presence Sensor is a virtual presence detector designed for the Hub
 You can find detailed step by step instruction at [This Old Smart Home](https://thisoldsmarthome.com/automations/life360/?tab=hubitat).
 
 ### ESPresense
-ESPresense is a work in progress, once I have ironed out all the details I will post a tutorial with detailed instructions. However in the meantime if you are going to play around with it you will need to make a change to the driver. You will have to add your rooms to the room attribute enum.
-`attribute "room", "enum", ["not_home", "garage"]`
+ESPresense is a work in progress, once I have ironed out all the details I will post a tutorial with detailed instructions. However in the meantime if you are going to play around with it you will need to make a change to the driver. You will have to add your rooms to the room attribute enum `attribute "room", "enum", ["not_home", "garage"]`.
