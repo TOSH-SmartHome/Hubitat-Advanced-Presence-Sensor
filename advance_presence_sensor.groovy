@@ -162,7 +162,7 @@ def mqtt_connect() {
             if(debugLogging) log.debug "${device.displayName} settting up MQTT Broker"
             interfaces.mqtt.connect(
                 "tcp://${mqttBroker}", 
-                "hubitat_${device.displayName.toLowerCase().replaceAll(' ', '_')}", 
+                "${location.hub.name.toLowerCase().replaceAll(' ', '_')}_${device.getDeviceNetworkId()}", 
                 mqttUsername, 
                 mqttPassword
             )
