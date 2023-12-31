@@ -160,7 +160,12 @@ def mqtt_connect() {
     if(mqttBroker && mqttUsername) {
         try {
             if(debugLogging) log.debug "${device.displayName} settting up MQTT Broker"
-            interfaces.mqtt.connect("tcp://${mqttBroker}", "hubitat_garage_door", mqttUsername, mqttPassword)
+            interfaces.mqtt.connect(
+                "tcp://${mqttBroker}", 
+                "hubitat_${device.displayName.toLowerCase().replaceAll(' ', '_')}", 
+                mqttUsername, 
+                mqttPassword
+            )
             if(mqttTopic) 
                 interfaces.mqtt.subscribe("${mqttTopic}")
         } catch(Exception e) {
