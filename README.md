@@ -10,5 +10,11 @@ The Advanced Presence Sensor is a virtual presence detector designed for the Hub
 ## Installation
 You can find detailed step by step instruction at [This Old Smart Home](https://thisoldsmarthome.com/automations/life360/?tab=hubitat).
 
-### ESPresense
+### MQTT
+Easily integrates with MQTT, just add your broker information under preferences and click save. The topics are automatically configured and uses the devices display name in lowercase and an '_' replaces the spaces. Below are all five topics below.
+#### Topics
+    - stat/device_name/presence
+    - stat/device_name/room
+
+#### ESPresense
 ESPresense is a work in progress, once I have ironed out all the details I will post a tutorial with detailed instructions. However in the meantime if you are going to play around with it you will need to make a change to the driver. You will have to add your rooms to the room attribute enum `attribute "room", "enum", ["not_home", "garage"]`.

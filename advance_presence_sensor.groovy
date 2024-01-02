@@ -25,12 +25,24 @@
  *
  */
 
-public static String version()          {  return "v2.0.0"  }
+public static String version()          {  return "v3.0.1"  }
 public static String name()             {  return "Advanced Presence Sensor"  }
-public static String driverInfo()       {  return "<p style=\"text-align:center\"></br><strong><a href='https://thisoldsmarthome.com' target='_blank'>This Old Smart Home</a></strong> (tosh)</br>${name()}<br/><em>${version()}</em></p>"  }
+public static String codeUrl()
+{
+    return "https://raw.githubusercontent.com/TOSH-SmartHome/Hubitat-Advanced-Presence-Sensor/main/advance_presence_sensor.groovy"
+}
+public static String driverInfo()
+{
+    return """
+        <p style='text-align:center'></br>
+        <strong><a href='https://thisoldsmarthome.com' target='_blank'>This Old Smart Home</a></strong> (TOSH-SmartHome)</br>
+        ${name()}</br>
+        <em>${version()}</em></p>
+    """
+}
 
 metadata {
-    definition (name: name(), namespace: "tosh", author: "John Goughenour") {
+    definition (name: name(), namespace: "tosh", author: "John Goughenour", importUrl: codeUrl()) {
         capability "Configuration"
         capability "Refresh"
         capability "Sensor"
@@ -94,10 +106,12 @@ def uninstalled(){
 def configure() {
     if(infoLogging) log.info "${device.displayName} is configuring"
 	unschedule()
-    
-    if(mqttTopic) 
-        interfaces.mqtt.unsubscribe("${mqttTopic}")
-    interfaces.mqtt.disconnect()
+    if(mqttBroker && mqttUsername) {
+        state.mqtt = true
+        if(mqttTopic) 
+            interfaces.mqtt.unsubscribe("${mqttTopic}")
+        interfaces.mqtt.disconnect()
+    } else state.mqtt = false
 
     if(infoLogging) log.info "${device.displayName} is initializing attributes"    
     // Initialize Attributes and Stat Variables
@@ -113,7 +127,7 @@ def initialize() {
     if(infoLogging) log.info "${device.displayName} is initializing"
     
     // Setup MQTT Connection
-    mqtt_connect()
+    if(state.mqtt) mqtt_connect()
     
     if(heartbeat.toInteger() < 60) {
         cron = "0/$heartbeat * * * * ? *"
@@ -127,7 +141,7 @@ def initialize() {
 def refresh() {
     if(infoLogging) log.info "${device.displayName} is refreshing"
     
-    if( !interfaces.mqtt.isConnected() ) mqtt_connect()
+    if( state.mqtt && !interfaces.mqtt.isConnected() ) mqtt_connect()
     
     if (ipAddress) {
         state.tryCount++
@@ -140,39 +154,54 @@ def refresh() {
 def arrived() {
     if(infoLogging) log.info "${device.displayName} is present"
 	sendEvent(name: "presence", value: 'present')
+    if(state.mqtt) sendMqttCommand("present", 'presence')
 }
 
 def departed() {
     if(infoLogging) log.info "${device.displayName} is not present"
-	if(device.currentValue("room") == 'not_home' && device.currentValue("pingable") == 'no') 
+	if(device.currentValue("room") == 'not_home' && device.currentValue("pingable") == 'no') {
         sendEvent(name: "presence", value: 'not present')
+        if(state.mqtt) sendMqttCommand("not present", 'presence')
+    }
 }
 
 def change_rooms(room) {
     if(infoLogging) log.info "${device.displayName} is  changing rooms"
     sendEvent(name: "room", value: room)
+    if(state.mqtt) sendMqttCommand(room, 'room')
     if(room != 'not_home' && device.currentValue("presence") == 'not present') arrived()
 }
 
 def mqtt_connect() {
     if(debugLogging) log.debug "${device.displayName} is to connect to MQTT Broker."
     
-    if(mqttBroker && mqttUsername) {
-        try {
-            if(debugLogging) log.debug "${device.displayName} settting up MQTT Broker"
-            interfaces.mqtt.connect(
-                "tcp://${mqttBroker}", 
-                "${location.hub.name.toLowerCase().replaceAll(' ', '_')}_${device.getDeviceNetworkId()}", 
-                mqttUsername, 
-                mqttPassword
-            )
-            if(mqttTopic) 
-                interfaces.mqtt.subscribe("${mqttTopic}")
-        } catch(Exception e) {
-            log.error "Unable to connect to the MQTT Broker ${e}"
-            sendEvent(name: "MqttConnection", value: 'DISCONNECTED')
+    try {
+        if(debugLogging) log.debug "${device.displayName} settting up MQTT Broker"
+        interfaces.mqtt.connect(
+            "tcp://${mqttBroker}", 
+            "${location.hub.name.toLowerCase().replaceAll(' ', '_')}_${device.getDeviceNetworkId()}", 
+            mqttUsername, 
+            mqttPassword
+        )
+                
+        if(mqttTopic) {
+            if(debugLogging) log.debug "${device.displayName} subscribing to topic: ${mqttTopic}"
+            interfaces.mqtt.subscribe("${mqttTopic}")
         }
+    } catch(Exception e) {
+        log.error "Unable to connect to the MQTT Broker ${e}"
+        sendEvent(name: "MqttConnection", value: 'DISCONNECTED')
     }
+}
+
+def sendMqttCommand(cmnd, payload) {
+    if(debugLogging) log.debug "${device.displayName} MQTT sending Command: ${cmnd} Payload: ${payload}"
+    if(debugLogging) 
+            log.debug "${device.displayName} is sending Topic: stat/${device.displayName.toLowerCase().replaceAll(' ', '_')}/${payload}/ Command: ${cmnd}"
+        interfaces.mqtt.publish(
+            "stat/${device.displayName.toLowerCase().replaceAll(' ', '_')}/${payload}/", 
+            "${cmnd}", 2, true
+        )
 }
 
 // parse events and messages
